@@ -1,108 +1,43 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Gas Consumption Dashboard</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f5f5f5;
-      padding: 20px;
-    }
-    h1 {
-      text-align: center;
-      margin-bottom: 20px;
-    }
-    h2 {
-      margin-top: 30px;
-      color: #333;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      background: #fff;
-      margin-top: 10px;
-    }
-    th, td {
-      padding: 8px 12px;
-      border: 1px solid #ccc;
-      text-align: left;
-    }
-    th {
-      background: #eee;
-    }
-    tr:nth-child(even) {
-      background: #f9f9f9;
-    }
-  </style>
-</head>
-<body>
+fetch(url)
+  .then(response => response.text())
+  .then(data => {
+    const rows = data.trim().split("\n").map(r => r.split(","));
+    const headers = rows[0];
+    const lastRow = rows[rows.length - 1];
 
-<h1>Gas Consumption Dashboard</h1>
+    console.log("Headers:", headers);
+    console.log("Last Row Data:", lastRow);
 
-<div id="todaySection"></div>
-<div id="prevSection"></div>
-<div id="mainLineSection"></div>
+    const getValue = key => {
+      const idx = headers.indexOf(key);
+      console.log(`Key: ${key}, Index: ${idx}`); // Log the key and its index
+      return idx !== -1 ? lastRow[idx] : "";
+    };
 
-<script>
-    // Google Sheets CSV URL
-    const sheetID = '2PACX-1vRK7cNxV_XjxJP7g5B41E5M6ILDdstOx_U3xfYd3EcXY40n7DOsXKfa_4rccbavN4w84_ll7EUZCxKJ';
-    const url = `https://docs.google.com/spreadsheets/d/e/${sheetID}/pub?output=csv`;
+    // --- Machines Table ---
+    const machineTable = document.getElementById("machineTable").querySelector("tbody");
+    machineMap.forEach(([name, todayKey, prevKey]) => {
+      const row = machineTable.insertRow();
+      row.insertCell().textContent = name;
+      row.insertCell().textContent = getValue(todayKey);
+      row.insertCell().textContent = getValue(prevKey);
+    });
 
-    // Sections
-    const todayKeys = [
-      "today_total_stanter_#1","today_total_stanter_#2","today_total_stanter_#3",
-      "today_total_stanter_#4","today_total_stanter_#5","today_total_stanter_#6",
-      "today_total_stanter_#7","today_total_FUTURA_#1","today_total_UNICA1_#2",
-      "today_total_UNICA2_#3","today_total_IDH_#1","today_total_THERMOSOLE_#1",
-      "today_total_HOTFLU_#1","today_total_STEAMBOILER_#1","TODAY_TATAL_ALL"
-    ];
+    // --- Main Line Table ---
+    const mainLineTable = document.getElementById("mainLineTable").querySelector("tbody");
+    const prevTotal =
+      parseFloat(getValue("PREV_MAIN_GAS_LINE_1_TOTAL") || 0) +
+      parseFloat(getValue("PREV_MAIN_GAS_LINE_2_TOTAL") || 0);
 
-    const prevKeys = [
-      "PREV_stanter_#1","PREV_total_stanter_#2","PREV_total_stanter_#3",
-      "PREV_total_stanter_#4","PREV_total_stanter_#5","PREV_total_stanter_#6",
-      "PREV_total_stanter_#7","PREV_total_FUTURA_#1","PREV_total_UNICA1_#2",
-      "PREV_total_UNICA2_#3","PREV_total_IDH_#1","PREV_total_THERMOSOLE_#1",
-      "PREV_total_HOTFLU_#1","PREV_total_STEAMBOILER_#1","PREV_TATAL_ALL"
-    ];
-
-    const mainKeys = [
-      "TODAY_MAIN_GAS_LINE_1_TOTAL","TODAY_MAIN_GAS_LINE_2_TOTAL","TODAY_COMBINE_TOTAL",
-      "TODAY_MAIN_GAS_LINE_1_FLOWRATE","TODAY_MAIN_GAS_LINE_2_FLOWRATE",
-      "PREV_MAIN_GAS_LINE_1_TOTAL","PREV_MAIN_GAS_LINE_2_TOTAL","PREV_COMBINE_TOTAL"
-    ];
-
-    // Fetch CSV and build tables
-    fetch(url)
-      .then(response => response.text())
-      .then(data => {
-        const rows = data.trim().split('\n').map(r => r.split(','));
-        const headers = rows[0];
-        const lastRow = rows[rows.length - 1];
-
-        document.getElementById("todaySection").innerHTML =
-            createTable("MACHINES TODAY READING", headers, lastRow, todayKeys);
-        document.getElementById("prevSection").innerHTML =
-            createTable("MACHINES PREVIOUS DAY READING", headers, lastRow, prevKeys);
-        document.getElementById("mainLineSection").innerHTML =
-            createTable("GAS MAIN LINE READING", headers, lastRow, mainKeys);
-      })
-      .catch(error => console.error('Error fetching data:', error));
-
-    // Helper to create table for a section
-    function createTable(title, headers, row, keys) {
-        let html = `<h2>${title}</h2><table><tr><th>Label</th><th>Value</th></tr>`;
-        keys.forEach(k => {
-            const idx = headers.indexOf(k);
-            if (idx !== -1 && row[idx] !== undefined) {
-                html += `<tr><td>${k}</td><td>${row[idx]}</td></tr>`;
-            }
-        });
-        html += "</table>";
-        return html;
-    }
-</script>
-
-</body>
-</html>
+    mainLineMap.forEach(([name, todayKey, prevKey]) => {
+      const row = mainLineTable.insertRow();
+      row.insertCell().textContent = name;
+      row.insertCell().textContent = getValue(todayKey);
+      if (name === "TOTAL") {
+        row.insertCell().textContent = prevTotal;
+      } else {
+        row.insertCell().textContent = prevKey ? getValue(prevKey) : "-";
+      }
+    });
+  })
+  .catch(error => console.error("Error fetching data:", error));
