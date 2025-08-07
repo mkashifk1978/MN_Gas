@@ -1,132 +1,188 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Gas Consumption Dashboard</title>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      background: #f5f5f5;
-      padding: 20px;
-    }
-    h1 {
-      text-align: center;
-      margin-bottom: 20px;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      background: #fff;
-      margin-top: 10px;
-    }
-    th, td {
-      padding: 8px 12px;
-      border: 1px solid #ccc;
-      text-align: left;
-    }
-    th {
-      background: #eee;
-    }
-    tr:nth-child(even) {
-      background: #f9f9f9;
-    }
-  </style>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Gas Consumption Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Roboto', sans-serif;
+            background: #e9ecef;
+            color: #343a40;
+            padding: 20px;
+            margin: 0;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: #007bff;
+        }
+        h2 {
+            color: #495057;
+            margin-top: 30px;
+            border-bottom: 2px solid #007bff;
+            padding-bottom: 10px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: #fff;
+            margin-top: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        th, td {
+            padding: 12px 15px;
+            border: 1px solid #dee2e6;
+            text-align: left;
+            transition: background-color 0.3s;
+        }
+        th {
+            background: #007bff;
+            color: white;
+            font-weight: 700;
+        }
+        tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+        tr:hover {
+            background: #f1f1f1;
+        }
+        .total-row {
+            font-weight: bold;
+            background: #d1ecf1;
+        }
+        .error {
+            color: red;
+            font-weight: bold;
+        }
+        .last-update {
+            text-align: center;
+            margin-bottom: 20px;
+            font-style: italic;
+            color: #6c757d;
+        }
+    </style>
 </head>
 <body>
 
 <h1>Gas Consumption Dashboard</h1>
+<div id="last-update" class="last-update"></div>
 
 <h2>Machines Gas Consumption (Today vs Yesterday)</h2>
 <table id="machineTable">
-  <thead>
-    <tr>
-      <th>Machine Name</th>
-      <th>Today</th>
-      <th>Yesterday</th>
-    </tr>
-  </thead>
-  <tbody></tbody>
+    <thead>
+        <tr>
+            <th>Machine Name</th>
+            <th>Today</th>
+            <th>Yesterday</th>
+        </tr>
+    </thead>
+    <tbody></tbody>
 </table>
 
 <h2>Gas Main Line Data (Today vs Yesterday)</h2>
 <table id="mainLineTable">
-  <thead>
-    <tr>
-      <th>Line</th>
-      <th>Today</th>
-      <th>Yesterday</th>
-    </tr>
-  </thead>
-  <tbody></tbody>
+    <thead>
+        <tr>
+            <th>Line</th>
+            <th>Today</th>
+            <th>Yesterday</th>
+        </tr>
+    </thead>
+    <tbody></tbody>
 </table>
 
 <script>
-const sheetID = '2PACX-1vRK7cNxV_XjxJP7g5B41E5M6ILDdstOx_U3xfYd3EcXY40n7DOsXKfa_4rccbavN4w84_ll7EUZCxKJ';
-const url = `https://docs.google.com/spreadsheets/d/e/${sheetID}/pub?output=csv`;
+    // The sheetID from the public sharing link is used here.
+    const sheetID = '2PACX-1vRK7cNxV_XjxJP7g5B41E5M6ILDdstOx_U3xfYd3EcXY40n7DOsXKfa_4rccbavN4w84_ll7EUZCxKJ';
+    
+    // The URL is now constructed to fetch the data from the 'pub' endpoint with the gid and output=csv parameters.
+    const url = `https://docs.google.com/spreadsheets/d/e/${sheetID}/pub?gid=0&single=true&output=csv`;
 
-const machineMap = [
-  ["STANTER#1", "today_total_stanter_#1", "PREV_stanter_#1"],
-  ["STANTER#2", "today_total_stanter_#2", "PREV_total_stanter_#2"],
-  ["STANTER#3", "today_total_stanter_#3", "PREV_total_stanter_#3"],
-  ["STANTER#4", "today_total_stanter_#4", "PREV_total_stanter_#4"],
-  ["STANTER#5", "today_total_stanter_#5", "PREV_total_stanter_#5"],
-  ["STANTER#6", "today_total_stanter_#6", "PREV_total_stanter_#6"],
-  ["STANTER#7", "today_total_stanter_#7", "PREV_total_stanter_#7"],
-  ["FUTURA#1", "today_total_FUTURA_#1", "PREV_total_FUTURA_#1"],
-  ["UNICA1#2", "today_total_UNICA1_#2", "PREV_total_UNICA1_#2"],
-  ["UNICA2#3", "today_total_UNICA2_#3", "PREV_total_UNICA2_#3"],
-  ["DIGITAL", "today_DIGITAL_GAS", "PREV_DIGITAL_GAS"],
-  ["Total", "TODAY_TATAL_ALL", "PREV_TATAL_ALL"]
-];
+    const machineMap = [
+        ["STANTER#1", "today_total_stanter_#1", "PREV_stanter_#1"],
+        ["STANTER#2", "today_total_stanter_#2", "PREV_total_stanter_#2"],
+        ["STANTER#3", "today_total_stanter_#3", "PREV_total_stanter_#3"],
+        ["STANTER#4", "today_total_stanter_#4", "PREV_total_stanter_#4"],
+        ["STANTER#5", "today_total_stanter_#5", "PREV_total_stanter_#5"],
+        ["STANTER#6", "today_total_stanter_#6", "PREV_total_stanter_#6"],
+        ["STANTER#7", "today_total_stanter_#7", "PREV_total_stanter_#7"],
+        ["FUTURA#1", "today_total_FUTURA_#1", "PREV_total_FUTURA_#1"],
+        ["UNICA1#2", "today_total_UNICA1_#2", "PREV_total_UNICA1_#2"],
+        ["UNICA2#3", "today_total_UNICA2_#3", "PREV_total_UNICA2_#3"],
+        ["DIGITAL", "today_DIGITAL_GAS", "PREV_DIGITAL_GAS"],
+        ["Total", "TODAY_TATAL_ALL", "PREV_TATAL_ALL"]
+    ];
 
-const mainLineMap = [
-  ["GAS LINE #1", "TODAY_MAIN_GAS_LINE_1_TOTAL", "PREV_MAIN_GAS_LINE_1_TOTAL"],
-  ["GAS LINE #2", "TODAY_MAIN_GAS_LINE_2_TOTAL", "PREV_MAIN_GAS_LINE_2_TOTAL"],
-  ["TOTAL", "TODAY_COMBINE_TOTAL", null], // we'll compute yesterday manually
-  ["LINE #1 GAS FLOWRATE", "TODAY_MAIN_GAS_LINE_1_FLOWRATE", null],
-  ["LINE #2 GAS FLOWRATE", "TODAY_MAIN_GAS_LINE_2_FLOWRATE", null]
-];
+    const mainLineMap = [
+        ["GAS LINE #1", "TODAY_MAIN_GAS_LINE_1_TOTAL", "PREV_MAIN_GAS_LINE_1_TOTAL"],
+        ["GAS LINE #2", "TODAY_MAIN_GAS_LINE_2_TOTAL", "PREV_MAIN_GAS_LINE_2_TOTAL"],
+        ["TOTAL", "TODAY_COMBINE_TOTAL", null], // we'll compute yesterday manually
+        ["LINE #1 GAS FLOWRATE", "TODAY_MAIN_GAS_LINE_1_FLOWRATE", null],
+        ["LINE #2 GAS FLOWRATE", "TODAY_MAIN_GAS_LINE_2_FLOWRATE", null]
+    ];
 
-fetch(url)
-  .then(response => response.text())
-  .then(data => {
-    const rows = data.trim().split("\n").map(r => r.split(","));
-    const headers = rows[0];
-    const lastRow = rows[rows.length - 1];
+    fetch(url)
+        .then(response => {
+            // Check for a successful response (status code 200)
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+            return response.text();
+        })
+        .then(data => {
+            const rows = data.trim().split("\n").map(r => r.split(","));
+            const headers = rows[0].map(h => h.trim()); // Trim headers to be safe
+            const lastRow = rows[rows.length - 1];
 
-    const getValue = key => {
-      const idx = headers.indexOf(key);
-      return idx !== -1 ? lastRow[idx] : "";
-    };
+            const getValue = key => {
+                const idx = headers.indexOf(key.trim()); // Trim key for comparison
+                return idx !== -1 ? lastRow[idx] : "";
+            };
 
-    // --- Machines Table ---
-    const machineTable = document.getElementById("machineTable").querySelector("tbody");
-    machineMap.forEach(([name, todayKey, prevKey]) => {
-      const row = machineTable.insertRow();
-      row.insertCell().textContent = name;
-      row.insertCell().textContent = getValue(todayKey);
-      row.insertCell().textContent = getValue(prevKey);
-    });
+            // --- Machines Table ---
+            const machineTable = document.getElementById("machineTable").querySelector("tbody");
+            machineMap.forEach(([name, todayKey, prevKey]) => {
+                const row = machineTable.insertRow();
+                row.insertCell().textContent = name;
+                row.insertCell().textContent = getValue(todayKey);
+                row.insertCell().textContent = getValue(prevKey);
+            });
 
-    // --- Main Line Table ---
-    const mainLineTable = document.getElementById("mainLineTable").querySelector("tbody");
-    const prevTotal =
-      parseFloat(getValue("PREV_MAIN_GAS_LINE_1_TOTAL") || 0) +
-      parseFloat(getValue("PREV_MAIN_GAS_LINE_2_TOTAL") || 0);
+            // --- Main Line Table ---
+            const mainLineTable = document.getElementById("mainLineTable").querySelector("tbody");
+            const prevTotal =
+                parseFloat(getValue("PREV_MAIN_GAS_LINE_1_TOTAL") || 0) +
+                parseFloat(getValue("PREV_MAIN_GAS_LINE_2_TOTAL") || 0);
 
-    mainLineMap.forEach(([name, todayKey, prevKey]) => {
-      const row = mainLineTable.insertRow();
-      row.insertCell().textContent = name;
-      row.insertCell().textContent = getValue(todayKey);
-      if (name === "TOTAL") {
-        row.insertCell().textContent = prevTotal;
-      } else {
-        row.insertCell().textContent = prevKey ? getValue(prevKey) : "-";
-      }
-    });
-  })
-  .catch(error => console.error("Error fetching data:", error));
+            mainLineMap.forEach(([name, todayKey, prevKey]) => {
+                const row = mainLineTable.insertRow();
+                row.insertCell().textContent = name;
+                row.insertCell().textContent = getValue(todayKey);
+                if (name === "TOTAL") {
+                    row.insertCell().textContent = prevTotal;
+                    row.classList.add("total-row");
+                } else {
+                    row.insertCell().textContent = prevKey ? getValue(prevKey) : "-";
+                }
+            });
+
+            // --- Update the timestamp after successful data retrieval ---
+            const lastUpdateElement = document.getElementById("last-update");
+            const now = new Date();
+            const formattedTime = now.toLocaleString();
+            lastUpdateElement.textContent = `Last updated: ${formattedTime}`;
+        })
+        .catch(error => {
+            console.error("Error fetching data:", error);
+            const errorMessage = document.createElement("div");
+            errorMessage.className = "error";
+            errorMessage.textContent = "Error fetching data. Please ensure the spreadsheet is public and try again.";
+            document.body.prepend(errorMessage);
+        });
 </script>
 
 </body>
